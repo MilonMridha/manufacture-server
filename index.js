@@ -38,6 +38,7 @@ async function run(){
     try{
         await client.connect();
         const partsCollection = client.db('wheel-car').collection('parts');
+        const orderCollection = client.db('wheel-car').collection('order');
 
         app.get('/parts', async (req, res)=>{
             const query ={};
@@ -50,6 +51,27 @@ async function run(){
             const id = req.params.id;
             const query = { _id: ObjectId(id) }
             const result = await partsCollection.findOne(query);
+            res.send(result);
+        });
+        app.put('/parts/:id', async (req, res) => {
+            const id = req.params.id;
+            const updateQty = req.body;
+
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    availableQty: updateQty.newAvailableQty
+                }
+            }
+            const result = await partsCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+
+
+        });
+        app.post('/order', async (req, res) => {
+            const addNew = req.body;
+            const result = await orderCollection.insertOne(addNew);
             res.send(result);
         });
 
