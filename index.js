@@ -33,15 +33,15 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 console.log('db connected');
 
 
-async function run(){
+async function run() {
 
-    try{
+    try {
         await client.connect();
         const partsCollection = client.db('wheel-car').collection('parts');
         const orderCollection = client.db('wheel-car').collection('order');
 
-        app.get('/parts', async (req, res)=>{
-            const query ={};
+        app.get('/parts', async (req, res) => {
+            const query = {};
             const cursor = partsCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
@@ -74,9 +74,22 @@ async function run(){
             const result = await orderCollection.insertOne(addNew);
             res.send(result);
         });
+        app.get('/order', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const cursor = orderCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+        app.delete('/order/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email }
+            const result = await orderCollection.deleteOne(filter);
+            res.send(result);
+        });
 
     }
-    finally{
+    finally {
 
     }
 }
