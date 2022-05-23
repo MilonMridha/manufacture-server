@@ -4,13 +4,13 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
-// const nodemailer = require('nodemailer');
-// const sgTransport = require('nodemailer-sendgrid-transport');
+
 const app = express();
 const port = process.env.PORT || 5000;
 
 
-// const stripe = require('stripe')(process.env.STRIPE_SECRET)
+const stripe = require('stripe')(process.env.STRIPE_SECRET);
+
 //middleware--------->
 // app.use(cors());
 //cors policy config--------->
@@ -39,6 +39,7 @@ async function run() {
         await client.connect();
         const partsCollection = client.db('wheel-car').collection('parts');
         const orderCollection = client.db('wheel-car').collection('order');
+        const paymentCollection = client.db('wheel-car').collection('payment');
 
         app.get('/parts', async (req, res) => {
             const query = {};
@@ -47,6 +48,32 @@ async function run() {
             res.send(result);
 
         });
+        app.post('/create-payment-intent', async(req, res)=>{
+            const service = req.body;
+            const quantity = service.quantity;
+            const amount = quantity*100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types:['card']
+
+            });
+            res.send({clientSecret: paymentIntent.client_secret})
+        });
+        app.patch('/order/:id', async(req, res)=>{
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = {_id: ObjectId(id)};
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            };
+            const result = await paymentCollection.insertOne(payment);
+            const updatedBooking = await orderCollection.updateOne(filter, updatedDoc);
+            res.send(updatedDoc);
+        })
         app.get('/parts/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) }
@@ -85,6 +112,12 @@ async function run() {
             const email = req.params.email;
             const filter = { email: email }
             const result = await orderCollection.deleteOne(filter);
+            res.send(result);
+        });
+        app.get('/order/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await orderCollection.findOne(query);
             res.send(result);
         });
 
