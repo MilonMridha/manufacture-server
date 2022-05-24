@@ -42,6 +42,7 @@ async function run() {
         const paymentCollection = client.db('wheel-car').collection('payment');
         const reviewCollection = client.db('wheel-car').collection('review');
         const profileCollection = client.db('wheel-car').collection('profile');
+        const userCollection = client.db('wheel-car').collection('user');
 
         app.get('/parts', async (req, res) => {
             const query = {};
@@ -50,6 +51,47 @@ async function run() {
             res.send(result);
 
         });
+
+
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+
+            const user = req.body;
+
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            // const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
+            //     expiresIn: '1h'
+            // })
+            res.send({ result });
+        });
+        app.get('/user', async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users)
+        });
+        //admin collection
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin });
+        });
+        app.put('/user/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' }
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        });
+
+
+
         app.post('/create-payment-intent', async(req, res)=>{
             const service = req.body;
             const quantity = service.quantity;
@@ -99,7 +141,6 @@ async function run() {
 
         });
         app.put('/profile/:email', async (req, res) => {
-            const id = req.params.id;
             const profile = req.body;
             const email = req.params.email;
             const filter = { email: email }
@@ -107,7 +148,13 @@ async function run() {
             const options = { upsert: true };
             const updateDoc = {
                 $set: {
-                    // availableQty: updateQty.newAvailableQty
+                    
+                    email: profile.email,
+                    name: profile.name,
+                    location: profile.location,
+                    phone: profile.phone,
+                    link: profile.link,
+                    education: profile.education
                 }
             }
             const result = await profileCollection.updateOne(filter, updateDoc, options);
