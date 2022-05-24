@@ -51,6 +51,11 @@ async function run() {
             res.send(result);
 
         });
+        app.post('/parts', async (req, res) => {
+            const addNew = req.body;
+            const result = await partsCollection.insertOne(addNew);
+            res.send(result);
+        });
 
 
         app.put('/user/:email', async (req, res) => {
@@ -124,6 +129,7 @@ async function run() {
             const result = await partsCollection.findOne(query);
             res.send(result);
         });
+
         app.put('/parts/:id', async (req, res) => {
             const id = req.params.id;
             const updateQty = req.body;
