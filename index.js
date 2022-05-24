@@ -40,6 +40,8 @@ async function run() {
         const partsCollection = client.db('wheel-car').collection('parts');
         const orderCollection = client.db('wheel-car').collection('order');
         const paymentCollection = client.db('wheel-car').collection('payment');
+        const reviewCollection = client.db('wheel-car').collection('review');
+        const profileCollection = client.db('wheel-car').collection('profile');
 
         app.get('/parts', async (req, res) => {
             const query = {};
@@ -96,6 +98,23 @@ async function run() {
 
 
         });
+        app.put('/profile/:email', async (req, res) => {
+            const id = req.params.id;
+            const profile = req.body;
+            const email = req.params.email;
+            const filter = { email: email }
+           
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    // availableQty: updateQty.newAvailableQty
+                }
+            }
+            const result = await profileCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+
+
+        });
         app.post('/order', async (req, res) => {
             const addNew = req.body;
             const result = await orderCollection.insertOne(addNew);
@@ -118,6 +137,18 @@ async function run() {
             const id = req.params.id;
             const query = { _id: ObjectId(id) }
             const result = await orderCollection.findOne(query);
+            res.send(result);
+        });
+        app.get('/review', async (req, res) => {
+            const query = {};
+            const cursor = reviewCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+
+        });
+        app.post('/review', async (req, res) => {
+            const addNew = req.body;
+            const result = await reviewCollection.insertOne(addNew);
             res.send(result);
         });
 
