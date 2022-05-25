@@ -64,7 +64,7 @@ async function run() {
         app.get('/parts', async (req, res) => {
             const query = {};
             const cursor = partsCollection.find(query);
-            const result = await cursor.toArray();
+            const result =  (await cursor.toArray()).reverse();
             res.send(result);
 
         });
@@ -146,6 +146,20 @@ async function run() {
             const updatedBooking = await orderCollection.updateOne(filter, updatedDoc);
             res.send(updatedDoc);
         })
+        app.patch('/shipped-order/:id', async(req, res)=>{
+            const id = req.params.id;
+            
+            const filter = {_id: ObjectId(id)};
+            const updatedDoc = {
+                $set: {
+                    
+                    status: true
+                }
+            };
+            
+            const updatedBooking = await orderCollection.updateOne(filter, updatedDoc);
+            res.send(updatedDoc);
+        })
         app.get('/parts/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) }
@@ -191,6 +205,14 @@ async function run() {
 
 
         });
+        app.get('/all-order', async (req, res) => {
+            const query = {};
+            const cursor = orderCollection.find(query);
+            const result =  await cursor.toArray();
+            res.send(result);
+
+        });
+       
         app.post('/order', async (req, res) => {
             const addNew = req.body;
             const result = await orderCollection.insertOne(addNew);
@@ -200,7 +222,7 @@ async function run() {
         app.get('/order',verifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
-            console.log(decodedEmail)
+           
             if(email === decodedEmail){
                 const query = { email: email };
                 const cursor = orderCollection.find(query);
@@ -223,10 +245,12 @@ async function run() {
             const result = await orderCollection.findOne(query);
             res.send(result);
         });
+        
+        
         app.get('/review', async (req, res) => {
             const query = {};
             const cursor = reviewCollection.find(query);
-            const result = await cursor.toArray();
+            const result =  (await cursor.toArray()).reverse();
             res.send(result);
 
         });
